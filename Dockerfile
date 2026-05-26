@@ -1,9 +1,30 @@
-FROM debian:latest
+FROM python:3.11-slim
 
-RUN apt update && apt upgrade -y
-RUN apt install git curl python3-pip ffmpeg -y
-RUN pip3 install -U pip
-COPY . /app
+# Prevent Python from buffering logs
+ENV PYTHONUNBUFFERED=1
+
+# Install system packages
+RUN apt update && apt install -y \
+    ffmpeg \
+    git \
+    curl \
+    && apt clean
+
+# Set working directory
 WORKDIR /app
-RUN pip3 install -U -r requirements.txt
-CMD python3 -m BADMUNDA
+
+# Copy requirements first
+COPY requirements.txt .
+
+# Upgrade pip and install requirements
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy all files
+COPY . .
+
+# Railway provides PORT automatically
+EXPOSE 8080
+
+# Start bot
+CMD ["python3", "start.py"]
